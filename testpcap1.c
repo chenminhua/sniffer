@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 #include <pcap.h>
 #include <errno.h>
@@ -40,7 +41,7 @@ int main(int argc, char **argv)
 
      当 promisc 设置为非0的任意值时，你就开启了淫乱模式。
     */
-  descr = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
+  descr = pcap_open_live(dev, BUFSIZ, 0, 100, errbuf);
 
   if (descr == NULL)
   {
@@ -59,14 +60,21 @@ int main(int argc, char **argv)
   packet = pcap_next(descr, &hdr);
   if (packet == NULL)
   {
-    printf("Didn't grad packet\n");
+    printf("Didn't grab packet\n");
     exit(1);
   }
   printf("Grabbed packet of length %d\n", hdr.len);
   printf("Recieved at ..... %s\n", ctime((const time_t *)&hdr.ts.tv_sec));
   printf("Ethernet address length is %d\n", ETHER_HDR_LEN);
 
-  /* lets start with the ether header... */
+  /* lets start with the ether header...
+  10Mb/s ethernet header
+  struct ether_header{
+    u_int8_t  ether_dhost[ETH_ALEN];	destination eth addr	
+    u_int8_t  ether_shost[ETH_ALEN];	source ether addr
+    u_int16_t ether_type;		          packet type ID field	
+  } __attribute__ ((__packed__));
+  */
   eptr = (struct ether_header *)packet;
 
   /* Do a couple of checks to see what packet type we have..*/
@@ -109,3 +117,9 @@ int main(int argc, char **argv)
 
   return 0;
 }
+
+// /* Ethernet protocol ID's */
+// #define	ETHERTYPE_PUP		0x0200      /* Xerox PUP */
+// #define	ETHERTYPE_IP		0x0800		/* IP */
+// #define	ETHERTYPE_ARP		0x0806		/* Address resolution */
+// #define	ETHERTYPE_REVARP	0x8035		/* Reverse ARP */
